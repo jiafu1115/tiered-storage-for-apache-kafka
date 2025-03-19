@@ -44,6 +44,7 @@ import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.CreateBucketRequest;
 
+import static io.aiven.kafka.tieredstorage.storage.s3.S3StorageConfig.S3_MULTIPART_UPLOAD_PART_SIZE_DEFAULT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.InstanceOfAssertFactories.DOUBLE;
@@ -115,6 +116,7 @@ class S3StorageMetricsTest {
         storage.delete(Set.of(key));
 
         final InputStream failingInputStream = mock(InputStream.class);
+        when(failingInputStream.available()).thenReturn(S3_MULTIPART_UPLOAD_PART_SIZE_DEFAULT + 1);
         final IOException exception = new IOException("test");
         when(failingInputStream.transferTo(any())).thenThrow(exception);
         assertThatThrownBy(() -> storage.upload(failingInputStream, key))
