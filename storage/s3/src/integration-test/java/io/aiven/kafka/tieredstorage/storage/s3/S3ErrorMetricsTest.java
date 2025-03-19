@@ -46,11 +46,14 @@ import static com.github.tomakehurst.wiremock.client.WireMock.any;
 import static com.github.tomakehurst.wiremock.client.WireMock.anyUrl;
 import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
 import static com.github.tomakehurst.wiremock.common.ContentTypes.CONTENT_TYPE;
+import static io.aiven.kafka.tieredstorage.storage.s3.S3StorageConfig.S3_MULTIPART_UPLOAD_PART_SIZE_DEFAULT;
 import static org.apache.http.entity.ContentType.APPLICATION_XML;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.catchThrowableOfType;
 import static org.assertj.core.api.InstanceOfAssertFactories.DOUBLE;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @WireMockTest
 class S3ErrorMetricsTest {
@@ -87,11 +90,11 @@ class S3ErrorMetricsTest {
             .willReturn(aResponse().withStatus(statusCode)
                 .withHeader(CONTENT_TYPE, APPLICATION_XML.getMimeType())
                 .withBody(String.format(ERROR_RESPONSE_TEMPLATE, statusCode))));
-        final S3Exception s3Exception = catchThrowableOfType(
+        final StorageBackendException storageBackendException = catchThrowableOfType(
             () -> storage.upload(InputStream.nullInputStream(), new TestObjectKey("key")),
-            S3Exception.class);
+            StorageBackendException.class);
 
-        assertThat(s3Exception.statusCode()).isEqualTo(statusCode);
+        assertThat(((S3Exception) storageBackendException.getCause()).statusCode()).isEqualTo(statusCode);
 
         // Comparing to 4 since the SDK makes 3 retries by default.
         assertThat(MBEAN_SERVER.getAttribute(s3MetricsObjectName, metricName + "-total"))
@@ -120,9 +123,11 @@ class S3ErrorMetricsTest {
                 .withHeader(CONTENT_TYPE, APPLICATION_XML.getMimeType())
                 .withBody("unparsable_xml")));
 
-        assertThatThrownBy(() -> storage.upload(InputStream.nullInputStream(), new TestObjectKey("key")))
-            .isInstanceOf(SdkClientException.class)
-            .hasMessageStartingWith("Could not parse XML response.");
+        final InputStream inputStream = mock(InputStream.class);
+        when(inputStream.available()).thenReturn(S3_MULTIPART_UPLOAD_PART_SIZE_DEFAULT + 1);
+        assertThatThrownBy(() -> storage.upload(inputStream, new TestObjectKey("key")))
+            .isInstanceOf(StorageBackendException.class)
+            .hasMessageStartingWith("Failed to upload key");
 
         assertThat(MBEAN_SERVER.getAttribute(s3MetricsObjectName, metricName + "-total"))
             .isEqualTo(1.0);

@@ -33,6 +33,7 @@ import io.aiven.kafka.tieredstorage.storage.StorageBackendException;
 
 import software.amazon.awssdk.awscore.exception.AwsServiceException;
 import software.amazon.awssdk.core.exception.SdkClientException;
+import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.Delete;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
@@ -40,6 +41,7 @@ import software.amazon.awssdk.services.s3.model.DeleteObjectsRequest;
 import software.amazon.awssdk.services.s3.model.DeleteObjectsResponse;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.ObjectIdentifier;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.StorageClass;
 
 public class S3Storage implements StorageBackend {
@@ -62,11 +64,30 @@ public class S3Storage implements StorageBackend {
 
     @Override
     public long upload(final InputStream inputStream, final ObjectKey key) throws StorageBackendException {
+        try {
+            final int availableSize = inputStream.available();
+            if (availableSize <= partSize) {
+                uploadAsSingleFile(inputStream, key, availableSize);
+                return availableSize;
+            }
+            return uploadAsMultiPart(inputStream, key);
+        } catch (final Exception e) {
+            throw new StorageBackendException("Failed to upload " + key, e);
+        }
+    }
+
+    private void uploadAsSingleFile(final InputStream inputStream, final ObjectKey key, final int availableSize) {
+        final PutObjectRequest putObjectRequest = PutObjectRequest.builder().bucket(bucketName)
+            .storageClass(storageClass)
+            .key(key.value()).build();
+        final RequestBody requestBody = RequestBody.fromInputStream(inputStream, availableSize);
+        s3Client.putObject(putObjectRequest, requestBody);
+    }
+
+    private long uploadAsMultiPart(final InputStream inputStream, final ObjectKey key) throws IOException {
         final var out = s3OutputStream(key);
         try (out) {
             inputStream.transferTo(out);
-        } catch (final IOException e) {
-            throw new StorageBackendException("Failed to upload " + key, e);
         }
         // getting the processed bytes after close to account last flush.
         return out.processedBytes();
