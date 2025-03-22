@@ -39,6 +39,7 @@ import software.amazon.awssdk.services.s3.model.CreateMultipartUploadRequest;
 import software.amazon.awssdk.services.s3.model.CreateMultipartUploadResponse;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.StorageClass;
+import software.amazon.awssdk.services.s3.model.Tagging;
 import software.amazon.awssdk.services.s3.model.UploadPartRequest;
 import software.amazon.awssdk.services.s3.model.UploadPartResponse;
 
@@ -60,7 +61,7 @@ public class S3UploadOutputStream extends OutputStream {
     private final ObjectKey key;
     private final StorageClass storageClass;
     final int partSize;
-
+    final Tagging tagging;
     private String uploadId;
     private boolean multiPartUpload;
     private final List<CompletedPart> completedParts = new ArrayList<>();
@@ -71,27 +72,35 @@ public class S3UploadOutputStream extends OutputStream {
     public S3UploadOutputStream(final String bucketName,
                                 final ObjectKey key,
                                 final int partSize,
-                                final S3Client client){
-        this(bucketName, key, StorageClass.STANDARD, partSize, client);
+                                final S3Client client
+                                ){
+        this(bucketName, key, StorageClass.STANDARD, partSize, client, null);
     }
 
     public S3UploadOutputStream(final String bucketName,
                                 final ObjectKey key,
                                 final StorageClass storageClass,
                                 final int partSize,
-                                final S3Client client) {
+                                final S3Client client,
+                                final Tagging tagging
+                                ) {
         this.bucketName = bucketName;
         this.key = key;
         this.storageClass = storageClass;
         this.client = client;
         this.partSize = partSize;
         this.partBuffer = ByteBuffer.allocate(partSize);
+        this.tagging = tagging;
     }
 
     private String createMultipartUploadRequest() {
-        final CreateMultipartUploadRequest initialRequest = CreateMultipartUploadRequest.builder().bucket(bucketName)
+        final CreateMultipartUploadRequest.Builder builder = CreateMultipartUploadRequest.builder().bucket(bucketName)
             .storageClass(storageClass)
-            .key(key.value()).build();
+            .key(key.value());
+        if (tagging != null){
+            builder.tagging(tagging);
+        }
+        final CreateMultipartUploadRequest initialRequest = builder.build();
         final CreateMultipartUploadResponse initiateResult = client.createMultipartUpload(initialRequest);
         log.debug("Create new multipart upload request: {}", initiateResult.uploadId());
         return initiateResult.uploadId();
@@ -186,9 +195,13 @@ public class S3UploadOutputStream extends OutputStream {
     }
 
     private void uploadAsSingleFile(final InputStream inputStream, final int availableSize) {
-        final PutObjectRequest putObjectRequest = PutObjectRequest.builder().bucket(bucketName)
+        final PutObjectRequest.Builder builder = PutObjectRequest.builder().bucket(bucketName)
             .storageClass(storageClass)
-            .key(key.value()).build();
+            .key(key.value());
+        if (tagging != null){
+            builder.tagging(tagging);
+        }
+        final PutObjectRequest putObjectRequest = builder.build();
         final RequestBody requestBody = RequestBody.fromInputStream(inputStream, availableSize);
         client.putObject(putObjectRequest, requestBody);
         closed = true;

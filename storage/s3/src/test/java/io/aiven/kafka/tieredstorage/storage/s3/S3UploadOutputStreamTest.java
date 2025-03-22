@@ -102,7 +102,7 @@ class S3UploadOutputStreamTest {
     void completeMultipartUploadWithNonDefaultStorageClass() throws IOException {
         final StorageClass nonDefaultStorageClass = StorageClass.STANDARD_IA;
         final S3UploadOutputStream s3UploadOutputStream = new S3UploadOutputStream(BUCKET_NAME, FILE_KEY,
-            nonDefaultStorageClass, 1, mockedS3);
+            nonDefaultStorageClass, 1, mockedS3, null);
         when(mockedS3.uploadPart(any(UploadPartRequest.class), any(RequestBody.class)))
             .thenReturn(newUploadPartResponse("SOME_ETAG#1"));
         s3UploadOutputStream.write(1);

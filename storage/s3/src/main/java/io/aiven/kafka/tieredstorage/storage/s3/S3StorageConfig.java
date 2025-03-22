@@ -20,8 +20,10 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URI;
 import java.time.Duration;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 import org.apache.kafka.common.config.AbstractConfig;
 import org.apache.kafka.common.config.ConfigDef;
@@ -38,6 +40,9 @@ import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.model.StorageClass;
+import software.amazon.awssdk.services.s3.model.Tag;
+import software.amazon.awssdk.services.s3.model.Tagging;
+import software.amazon.awssdk.utils.StringUtils;
 import software.amazon.awssdk.utils.builder.Buildable;
 
 public class S3StorageConfig extends AbstractConfig {
@@ -53,7 +58,8 @@ public class S3StorageConfig extends AbstractConfig {
     public static final String S3_STORAGE_CLASS_CONFIG = "s3.storage.class";
     private static final String S3_STORAGE_CLASS_DOC = "Defines which storage class to use when uploading objects";
     static final String S3_STORAGE_CLASS_DEFAULT = StorageClass.STANDARD.toString();
-
+    public static final String S3_TAGS_CONFIG = "s3.tags";
+    private static final String S3_TAGS_DOC = "Sets tags for uploaded objects";
     static final String S3_PATH_STYLE_ENABLED_CONFIG = "s3.path.style.access.enabled";
     private static final String S3_PATH_STYLE_ENABLED_DOC = "Whether to use path style access or virtual hosts. "
         + "By default, empty value means S3 library will auto-detect. "
@@ -97,6 +103,46 @@ public class S3StorageConfig extends AbstractConfig {
             + "When set to \"false\", there will be no validation. "
             + "It is disabled by default as Kafka already validates integrity of the files.";
 
+    static class S3ObjectTagValidator implements ConfigDef.Validator {
+        static final int MAX_TOTAL_TAG_COUNT = 10;
+
+        @Override
+        public void ensureValid(final String name, final Object value) {
+            if (value == null) {
+                return;
+            }
+            checkAndGetTags(name, value.toString());
+        }
+
+        static Tagging checkAndGetTags(final String name, final String value) {
+            if (StringUtils.isEmpty(value)) {
+                return null;
+            }
+            final Set<Tag> tagSet = new HashSet<Tag>();
+            final String[] pairs = value.split(",");
+            if (pairs.length > MAX_TOTAL_TAG_COUNT) {
+                throw new ConfigException(name, value,
+                    "Tag count is larger than max allowed number: " + MAX_TOTAL_TAG_COUNT);
+            }
+
+            for (final String pair : pairs) {
+                final String[] keyValue = pair.split(":");
+                if (keyValue.length != 2) {
+                    throw new ConfigException(name, value,
+                        "Tag format should be right, example: tag1:value1,tag2:value2");
+                }
+                final Tag tag = Tag.builder().key(keyValue[0]).value(keyValue[1]).build();
+                tagSet.add(tag);
+            }
+
+            return Tagging.builder().tagSet(tagSet).build();
+        }
+
+        @Override
+        public String toString() {
+            return "Tags format example: tag1:value1,tag2:value2, max allow tag number is " + MAX_TOTAL_TAG_COUNT;
+        }
+    }
 
     public static ConfigDef configDef() {
         return new ConfigDef()
@@ -128,6 +174,13 @@ public class S3StorageConfig extends AbstractConfig {
                         .stream().map(Object::toString).toArray(String[]::new)),
                 ConfigDef.Importance.LOW,
                 S3_STORAGE_CLASS_DOC)
+            .define(
+                S3_TAGS_CONFIG,
+                ConfigDef.Type.STRING,
+                null,
+                new S3ObjectTagValidator(),
+                ConfigDef.Importance.LOW,
+                S3_TAGS_DOC)
             .define(
                 S3_PATH_STYLE_ENABLED_CONFIG,
                 ConfigDef.Type.BOOLEAN,
@@ -216,6 +269,11 @@ public class S3StorageConfig extends AbstractConfig {
 
     Region region() {
         return Region.of(getString(S3_REGION_CONFIG));
+    }
+
+    Tagging tagging() {
+        final String tags = getString(S3_TAGS_CONFIG);
+        return S3ObjectTagValidator.checkAndGetTags(S3_TAGS_CONFIG, tags);
     }
 
     Duration apiCallTimeout() {

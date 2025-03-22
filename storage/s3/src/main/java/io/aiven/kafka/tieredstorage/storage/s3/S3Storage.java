@@ -41,6 +41,7 @@ import software.amazon.awssdk.services.s3.model.DeleteObjectsResponse;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.ObjectIdentifier;
 import software.amazon.awssdk.services.s3.model.StorageClass;
+import software.amazon.awssdk.services.s3.model.Tagging;
 
 public class S3Storage implements StorageBackend {
     private static final int MAX_DELETE_OBJECTS = 1000;
@@ -50,6 +51,7 @@ public class S3Storage implements StorageBackend {
     private String bucketName;
     private StorageClass storageClass;
     private int partSize;
+    private Tagging tagging;
 
     @Override
     public void configure(final Map<String, ?> configs) {
@@ -58,6 +60,7 @@ public class S3Storage implements StorageBackend {
         this.bucketName = config.bucketName();
         this.storageClass = config.storageClass();
         this.partSize = config.uploadPartSize();
+        this.tagging = config.tagging();
     }
 
     @Override
@@ -73,7 +76,7 @@ public class S3Storage implements StorageBackend {
     }
 
     S3UploadOutputStream s3OutputStream(final ObjectKey key) {
-        return new S3UploadOutputStream(bucketName, key, storageClass, partSize, s3Client);
+        return new S3UploadOutputStream(bucketName, key, storageClass, partSize, s3Client, tagging);
     }
 
     @Override

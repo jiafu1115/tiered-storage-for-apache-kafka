@@ -18,16 +18,19 @@ package io.aiven.kafka.tieredstorage.storage.s3;
 
 import java.net.URI;
 import java.time.Duration;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.kafka.common.config.ConfigException;
 
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 import software.amazon.awssdk.auth.credentials.AwsCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.EnvironmentVariableCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.model.StorageClass;
+import software.amazon.awssdk.services.s3.model.Tag;
 
 import static io.aiven.kafka.tieredstorage.storage.s3.S3StorageConfig.S3_MULTIPART_UPLOAD_PART_SIZE_DEFAULT;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -219,6 +222,65 @@ class S3StorageConfigTest {
             .isInstanceOf(ConfigException.class)
             .hasMessage("Invalid value 1024 for configuration s3.multipart.upload.part.size: "
                 + "Value must be at least 5242880");
+    }
+
+    @Test
+    void configureWithTooManyTags() {
+        final String tagsStr = newTags(S3StorageConfig.S3ObjectTagValidator.MAX_TOTAL_TAG_COUNT + 1);
+        assertThatThrownBy(() -> new S3StorageConfig(Map.of(
+            "s3.bucket.name", BUCKET_NAME,
+            "s3.region", TEST_REGION.id(),
+            "s3.tags", tagsStr
+        )))
+            .isInstanceOf(ConfigException.class)
+            .hasMessageContaining("Tag count is larger than max allowed number");
+    }
+
+    @NotNull
+    private static String newTags(final int tagNumber) {
+        final StringBuilder tagsStringBuilder = new StringBuilder();
+        for (int i = 1; i <= tagNumber; i++) {
+            tagsStringBuilder.append(String.format("tag%d:value%d,", i, i));
+        }
+        final String tags = tagsStringBuilder.toString();
+        return tags.substring(0, tags.length() - 1);
+    }
+
+    @Test
+    void configureWithMultipleTags() {
+        final String tags = newTags(S3StorageConfig.S3ObjectTagValidator.MAX_TOTAL_TAG_COUNT);
+        final S3StorageConfig s3StorageConfig = new S3StorageConfig(Map.of(
+            "s3.bucket.name", BUCKET_NAME,
+            "s3.region", TEST_REGION.id(),
+            "s3.tags", tags
+        ));
+        assertThat(s3StorageConfig.tagging().tagSet().size()).isEqualTo(10);
+    }
+
+    @Test
+    void configureWithOnlyOneTag() {
+        final String tag = "tag1:value1";
+        final S3StorageConfig s3StorageConfig = new S3StorageConfig(Map.of(
+            "s3.bucket.name", BUCKET_NAME,
+            "s3.region", TEST_REGION.id(),
+            "s3.tags", tag
+        ));
+        final List<Tag> tags = s3StorageConfig.tagging().tagSet();
+        assertThat(tags.size()).isEqualTo(1);
+        assertThat(tags.get(0).key()).isEqualTo("tag1");
+        assertThat(tags.get(0).value()).isEqualTo("value1");
+    }
+
+    @Test
+    void configureWithWrongFormatTag() {
+        final String tag = "tag1=value1";
+        assertThatThrownBy(() -> new S3StorageConfig(Map.of(
+            "s3.bucket.name", BUCKET_NAME,
+            "s3.region", TEST_REGION.id(),
+            "s3.tags", tag
+        )))
+            .isInstanceOf(ConfigException.class)
+            .hasMessageContaining("Tag format should be right, example: tag1:value1,tag2:value2");
     }
 
     @Test

@@ -503,6 +503,14 @@ S3StorageConfig
   * Valid Values: [STANDARD, REDUCED_REDUNDANCY, STANDARD_IA, ONEZONE_IA, INTELLIGENT_TIERING, GLACIER, DEEP_ARCHIVE, OUTPOSTS, GLACIER_IR, SNOW, EXPRESS_ONEZONE]
   * Importance: low
 
+``s3.tags``
+  Sets tags for uploaded objects
+
+  * Type: string
+  * Default: null
+  * Valid Values: Tags format example: tag1:value1,tag2:value2, max allow tag number is 10
+  * Importance: low
+
 
 
 -----------------
