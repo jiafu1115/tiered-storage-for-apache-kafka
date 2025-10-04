@@ -39,8 +39,7 @@ import com.oracle.bmc.objectstorage.requests.GetObjectRequest;
 
 public class OciStorage implements StorageBackend {
 
-    ObjectStorageClient objectStorageClient;
-
+    private ObjectStorageClient objectStorageClient;
     private String namespaceName;
     private String bucketName;
     private int partSize;
