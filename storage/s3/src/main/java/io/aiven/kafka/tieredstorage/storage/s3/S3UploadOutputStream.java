@@ -22,6 +22,7 @@ import java.util.List;
 
 import io.aiven.kafka.tieredstorage.storage.ObjectKey;
 
+import io.aiven.kafka.tieredstorage.storage.upload.AbstractUploadOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.core.sync.RequestBody;

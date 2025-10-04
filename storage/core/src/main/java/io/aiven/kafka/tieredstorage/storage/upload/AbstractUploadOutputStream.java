@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package io.aiven.kafka.tieredstorage.storage.s3;
+package io.aiven.kafka.tieredstorage.storage.upload;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -191,7 +191,7 @@ public abstract class AbstractUploadOutputStream<T> extends OutputStream {
 
     protected abstract T _uploadPart(String bucket, String key, String uploadId, int partNumber, final InputStream in, final int actualPartSize);
 
-    long processedBytes() {
+    public long processedBytes() {
         return processedBytes;
     }
 }

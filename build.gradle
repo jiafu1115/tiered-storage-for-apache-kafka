@@ -396,6 +396,7 @@ def modulesToPublish = [
         ':storage:core',
         ':storage:filesystem',
         ':storage:s3',
+        ':storage:oci',
         ':storage:gcs',
         ':storage:azure',
 ]
