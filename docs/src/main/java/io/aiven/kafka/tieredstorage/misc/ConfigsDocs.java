@@ -16,7 +16,6 @@
 
 package io.aiven.kafka.tieredstorage.misc;
 
-import io.aiven.kafka.tieredstorage.storage.oci.OciStorageConfig;
 import org.apache.kafka.common.config.ConfigDef;
 
 import io.aiven.kafka.tieredstorage.config.ChunkCacheConfig;
@@ -28,6 +27,7 @@ import io.aiven.kafka.tieredstorage.fetch.manifest.MemorySegmentManifestCache;
 import io.aiven.kafka.tieredstorage.storage.azure.AzureBlobStorageConfig;
 import io.aiven.kafka.tieredstorage.storage.filesystem.FileSystemStorageConfig;
 import io.aiven.kafka.tieredstorage.storage.gcs.GcsStorageConfig;
+import io.aiven.kafka.tieredstorage.storage.oci.OciStorageConfig;
 import io.aiven.kafka.tieredstorage.storage.s3.S3StorageConfig;
 
 import static io.aiven.kafka.tieredstorage.config.ChunkManagerFactoryConfig.FETCH_CHUNK_CACHE_PREFIX;
