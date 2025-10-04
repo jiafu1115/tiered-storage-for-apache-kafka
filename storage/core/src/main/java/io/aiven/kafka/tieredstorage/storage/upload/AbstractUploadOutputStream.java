@@ -207,4 +207,8 @@ public abstract class AbstractUploadOutputStream<T> extends OutputStream {
     public long processedBytes() {
         return processedBytes;
     }
+
+    public int partSize() {
+        return partSize;
+    }
 }
