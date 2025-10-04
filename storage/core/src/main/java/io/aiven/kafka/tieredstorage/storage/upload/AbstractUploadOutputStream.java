@@ -42,7 +42,7 @@ public abstract class AbstractUploadOutputStream<T> extends OutputStream {
     private final ByteBuffer partBuffer;
     private final String bucketName;
     private final String key;
-    final int partSize;
+    private final int partSize;
 
     private String uploadId;
     private final List<T> completedParts = new ArrayList<>();
