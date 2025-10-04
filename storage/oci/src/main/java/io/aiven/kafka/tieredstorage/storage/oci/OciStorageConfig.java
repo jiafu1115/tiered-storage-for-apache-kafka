@@ -47,32 +47,32 @@ public class OciStorageConfig extends AbstractConfig {
     public static ConfigDef configDef() {
         return new ConfigDef()
             .define(
-                    OCI_BUCKET_NAME_CONFIG,
+                OCI_NAMESPACE_NAME_CONFIG,
                 ConfigDef.Type.STRING,
                 ConfigDef.NO_DEFAULT_VALUE,
                 new ConfigDef.NonEmptyString(),
                 ConfigDef.Importance.HIGH,
-                    OCI_BUCKET_NAME_DOC)
+                OCI_NAMESPACE_NAME_DOC)
             .define(
-                    OCI_NAMESPACE_NAME_CONFIG,
-                    ConfigDef.Type.STRING,
-                    ConfigDef.NO_DEFAULT_VALUE,
-                    new ConfigDef.NonEmptyString(),
-                    ConfigDef.Importance.HIGH,
-                    OCI_NAMESPACE_NAME_DOC)
-            .define(
-                    OCI_REGION_CONFIG,
+                OCI_BUCKET_NAME_CONFIG,
                 ConfigDef.Type.STRING,
                 ConfigDef.NO_DEFAULT_VALUE,
-                ConfigDef.Importance.MEDIUM,
-                    OCI_REGION_DOC)
+                new ConfigDef.NonEmptyString(),
+                ConfigDef.Importance.HIGH,
+                OCI_BUCKET_NAME_DOC)
             .define(
-                    OCI_MULTIPART_UPLOAD_PART_SIZE_CONFIG,
+                OCI_REGION_CONFIG,
+                ConfigDef.Type.STRING,
+                ConfigDef.NO_DEFAULT_VALUE,
+                ConfigDef.Importance.HIGH,
+                OCI_REGION_DOC)
+            .define(
+                OCI_MULTIPART_UPLOAD_PART_SIZE_CONFIG,
                 ConfigDef.Type.INT,
-                    OCI_MULTIPART_UPLOAD_PART_SIZE_DEFAULT,
+                OCI_MULTIPART_UPLOAD_PART_SIZE_DEFAULT,
                 ConfigDef.Range.between(OCI_MULTIPART_UPLOAD_PART_SIZE_MIN, OCI_MULTIPART_UPLOAD_PART_SIZE_MAX),
                 ConfigDef.Importance.MEDIUM,
-                    OCI_MULTIPART_UPLOAD_PART_SIZE_DOC);
+                OCI_MULTIPART_UPLOAD_PART_SIZE_DOC);
     }
 
     public OciStorageConfig(final Map<String, ?> props) {

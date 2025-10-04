@@ -16,6 +16,7 @@
 
 package io.aiven.kafka.tieredstorage.misc;
 
+import io.aiven.kafka.tieredstorage.storage.oci.OciStorageConfig;
 import org.apache.kafka.common.config.ConfigDef;
 
 import io.aiven.kafka.tieredstorage.config.ChunkCacheConfig;
@@ -94,6 +95,11 @@ public class ConfigsDocs {
         printSubsectionTitle("S3StorageConfig");
         final var s3StorageConfigDef = S3StorageConfig.configDef();
         out.println(s3StorageConfigDef.toEnrichedRst());
+        out.println();
+
+        printSubsectionTitle("OciStorageConfig");
+        final var ociStorageConfigDef = OciStorageConfig.configDef();
+        out.println(ociStorageConfigDef.toEnrichedRst());
         out.println();
 
         printSubsectionTitle("FilesystemStorageConfig");
