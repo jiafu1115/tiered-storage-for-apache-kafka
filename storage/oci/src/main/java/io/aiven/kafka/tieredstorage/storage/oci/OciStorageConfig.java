@@ -28,11 +28,11 @@ import com.oracle.bmc.auth.InstancePrincipalsAuthenticationDetailsProvider;
 public class OciStorageConfig extends AbstractConfig {
 
     public static final String OCI_NAMESPACE_NAME_CONFIG = "oci.namespace.name";
-    private static final String OCI_NAMESPACE_NAME_DOC = "oci namespace to store log segments";
+    private static final String OCI_NAMESPACE_NAME_DOC = "oci namespace which the bucket belongs to";
     public static final String OCI_BUCKET_NAME_CONFIG = "oci.bucket.name";
     private static final String OCI_BUCKET_NAME_DOC = "oci bucket to store log segments";
     public static final String OCI_REGION_CONFIG = "oci.region";
-    private static final String OCI_REGION_DOC = "OCI region where object storage bucket is placed";
+    private static final String OCI_REGION_DOC = "OCI region where the bucket is placed";
 
     private static final String OCI_MULTIPART_UPLOAD_PART_SIZE_CONFIG = "oci.multipart.upload.part.size";
     private static final String OCI_MULTIPART_UPLOAD_PART_SIZE_DOC = "Size of parts in bytes to use when uploading. "
