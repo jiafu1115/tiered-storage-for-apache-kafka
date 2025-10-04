@@ -16,6 +16,12 @@
 
 package io.aiven.kafka.tieredstorage.storage.oci;
 
+import java.io.InputStream;
+import java.util.List;
+
+import io.aiven.kafka.tieredstorage.storage.ObjectKey;
+import io.aiven.kafka.tieredstorage.storage.upload.AbstractUploadOutputStream;
+
 import com.oracle.bmc.objectstorage.ObjectStorageClient;
 import com.oracle.bmc.objectstorage.model.CommitMultipartUploadDetails;
 import com.oracle.bmc.objectstorage.model.CommitMultipartUploadPartDetails;
@@ -27,14 +33,8 @@ import com.oracle.bmc.objectstorage.requests.PutObjectRequest;
 import com.oracle.bmc.objectstorage.requests.UploadPartRequest;
 import com.oracle.bmc.objectstorage.responses.CreateMultipartUploadResponse;
 import com.oracle.bmc.objectstorage.responses.UploadPartResponse;
-import io.aiven.kafka.tieredstorage.storage.ObjectKey;
-import io.aiven.kafka.tieredstorage.storage.upload.AbstractUploadOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.InputStream;
-import java.util.List;
-
 
 public class OciUploadOutputStream extends AbstractUploadOutputStream<CommitMultipartUploadPartDetails> {
 
@@ -54,25 +54,28 @@ public class OciUploadOutputStream extends AbstractUploadOutputStream<CommitMult
     }
 
     @Override
-    protected String createMultipartUploadRequest(String bucketName, String key) {
-        CreateMultipartUploadDetails createDetails = CreateMultipartUploadDetails.builder()
+    protected String createMultipartUploadRequest(final String bucketName, final String key) {
+        final CreateMultipartUploadDetails createDetails = CreateMultipartUploadDetails.builder()
                 .object(key)
                 .contentType("application/octet-stream")
                 .build();
 
-        CreateMultipartUploadRequest initialRequest = CreateMultipartUploadRequest.builder()
+        final CreateMultipartUploadRequest initialRequest = CreateMultipartUploadRequest.builder()
                 .namespaceName(namespaceName)
                 .bucketName(bucketName)
                 .createMultipartUploadDetails(createDetails)
                 .build();
-        final CreateMultipartUploadResponse initiateResult = client.createMultipartUpload(initialRequest);
-        String uploadId = initiateResult.getMultipartUpload().getUploadId();
+        final CreateMultipartUploadResponse response = client.createMultipartUpload(initialRequest);
+        final String uploadId = response.getMultipartUpload().getUploadId();
         log.debug("Create new multipart upload request: {}", uploadId);
         return uploadId;
     }
 
-    protected void uploadAsSingleFile(final String bucketName, final String key, final InputStream inputStream, final int size) {
-        PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+    protected void uploadAsSingleFile(final String bucketName,
+                                      final String key,
+                                      final InputStream inputStream,
+                                      final int size) {
+        final PutObjectRequest putObjectRequest = PutObjectRequest.builder()
                 .namespaceName(namespaceName)
                 .bucketName(bucketName)
                 .objectName(key)
@@ -83,8 +86,13 @@ public class OciUploadOutputStream extends AbstractUploadOutputStream<CommitMult
     }
 
     @Override
-    protected CommitMultipartUploadPartDetails _uploadPart(String bucketName, String key, String uploadId, int partNumber, final InputStream in, final int actualPartSize) {
-        UploadPartRequest uploadPartRequest = UploadPartRequest.builder()
+    protected CommitMultipartUploadPartDetails _uploadPart(final String bucketName,
+                                                           final String key,
+                                                           final String uploadId,
+                                                           final int partNumber,
+                                                           final InputStream in,
+                                                           final int actualPartSize) {
+        final UploadPartRequest uploadPartRequest = UploadPartRequest.builder()
                 .namespaceName(namespaceName)
                 .bucketName(bucketName)
                 .objectName(key)
@@ -93,16 +101,16 @@ public class OciUploadOutputStream extends AbstractUploadOutputStream<CommitMult
                 .uploadPartBody(in)
                 .build();
 
-        UploadPartResponse uploadResult = client.uploadPart(uploadPartRequest);
+        final UploadPartResponse uploadPartResponse = client.uploadPart(uploadPartRequest);
 
         return CommitMultipartUploadPartDetails.builder()
                         .partNum(partNumber)
-                        .etag(uploadResult.getETag())
+                        .etag(uploadPartResponse.getETag())
                         .build();
     }
 
     @Override
-    protected void abortUpload(String bucketName, String key, String uploadId) {
+    protected void abortUpload(final String bucketName, final String key, final String uploadId) {
         final var request = AbortMultipartUploadRequest.builder()
                 .namespaceName(namespaceName)
                 .bucketName(bucketName)
@@ -113,12 +121,15 @@ public class OciUploadOutputStream extends AbstractUploadOutputStream<CommitMult
     }
 
     @Override
-    protected void completeUpload(List<CommitMultipartUploadPartDetails> completedParts, String bucketName, String key, String uploadId) {
-        CommitMultipartUploadDetails commitDetails = CommitMultipartUploadDetails.builder()
+    protected void completeUpload(final List<CommitMultipartUploadPartDetails> completedParts,
+                                  final String bucketName,
+                                  final String key,
+                                  final String uploadId) {
+        final CommitMultipartUploadDetails commitDetails = CommitMultipartUploadDetails.builder()
                 .partsToCommit(completedParts)
                 .build();
 
-        CommitMultipartUploadRequest commitReq = CommitMultipartUploadRequest.builder()
+        final CommitMultipartUploadRequest commitMultipartUploadRequest = CommitMultipartUploadRequest.builder()
                 .namespaceName(namespaceName)
                 .bucketName(bucketName)
                 .objectName(key)
@@ -126,7 +137,7 @@ public class OciUploadOutputStream extends AbstractUploadOutputStream<CommitMult
                 .commitMultipartUploadDetails(commitDetails)
                 .build();
 
-        client.commitMultipartUpload(commitReq);
+        client.commitMultipartUpload(commitMultipartUploadRequest);
     }
 
 }

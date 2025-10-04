@@ -16,13 +16,14 @@
 
 package io.aiven.kafka.tieredstorage.storage.oci;
 
-import com.oracle.bmc.Region;
-import com.oracle.bmc.auth.AbstractAuthenticationDetailsProvider;
-import com.oracle.bmc.auth.InstancePrincipalsAuthenticationDetailsProvider;
+import java.util.Map;
+
 import org.apache.kafka.common.config.AbstractConfig;
 import org.apache.kafka.common.config.ConfigDef;
 
-import java.util.Map;
+import com.oracle.bmc.Region;
+import com.oracle.bmc.auth.AbstractAuthenticationDetailsProvider;
+import com.oracle.bmc.auth.InstancePrincipalsAuthenticationDetailsProvider;
 
 public class OciStorageConfig extends AbstractConfig {
 

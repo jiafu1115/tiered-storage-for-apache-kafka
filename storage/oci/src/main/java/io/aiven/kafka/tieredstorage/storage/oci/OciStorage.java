@@ -16,23 +16,26 @@
 
 package io.aiven.kafka.tieredstorage.storage.oci;
 
-import com.oracle.bmc.model.BmcException;
-import com.oracle.bmc.model.Range;
-import com.oracle.bmc.objectstorage.ObjectStorageClient;
-import com.oracle.bmc.objectstorage.requests.DeleteObjectRequest;
-import com.oracle.bmc.objectstorage.requests.GetObjectRequest;
-import io.aiven.kafka.tieredstorage.storage.BytesRange;
-import io.aiven.kafka.tieredstorage.storage.InvalidRangeException;
-import io.aiven.kafka.tieredstorage.storage.KeyNotFoundException;
-import io.aiven.kafka.tieredstorage.storage.ObjectKey;
-import io.aiven.kafka.tieredstorage.storage.StorageBackend;
-import io.aiven.kafka.tieredstorage.storage.StorageBackendException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import io.aiven.kafka.tieredstorage.storage.BytesRange;
+import io.aiven.kafka.tieredstorage.storage.InvalidRangeException;
+import io.aiven.kafka.tieredstorage.storage.KeyNotFoundException;
+import io.aiven.kafka.tieredstorage.storage.ObjectKey;
+import io.aiven.kafka.tieredstorage.storage.StorageBackend;
+import io.aiven.kafka.tieredstorage.storage.StorageBackendException;
+
+import com.oracle.bmc.model.BmcException;
+import com.oracle.bmc.model.Range;
+import com.oracle.bmc.objectstorage.ObjectStorageClient;
+import com.oracle.bmc.objectstorage.requests.DeleteObjectRequest;
+import com.oracle.bmc.objectstorage.requests.GetObjectRequest;
+
 
 public class OciStorage implements StorageBackend {
 
@@ -85,7 +88,7 @@ public class OciStorage implements StorageBackend {
     public void delete(final Set<ObjectKey> keys) throws StorageBackendException {
         final List<ObjectKey> objectKeys = new ArrayList<>(keys);
         //OCI don't support batch delete
-        for (ObjectKey objectKey : objectKeys) {
+        for (final ObjectKey objectKey : objectKeys) {
             this.delete(objectKey);
         }
     }
@@ -134,7 +137,7 @@ public class OciStorage implements StorageBackend {
     }
 
     private Range formatRange(final BytesRange range) {
-        return new Range((long)range.firstPosition(), (long) range.lastPosition());
+        return new Range((long) range.firstPosition(), (long) range.lastPosition());
     }
 
     @Override

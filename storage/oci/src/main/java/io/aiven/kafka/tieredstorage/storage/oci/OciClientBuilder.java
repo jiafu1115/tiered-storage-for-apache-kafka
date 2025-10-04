@@ -26,5 +26,5 @@ class OciClientBuilder {
         final AbstractAuthenticationDetailsProvider credentialsProvider = config.credentialsProvider();
         return ObjectStorageClient.builder().region(region)
                 .build(credentialsProvider);
-     }
+    }
 }
