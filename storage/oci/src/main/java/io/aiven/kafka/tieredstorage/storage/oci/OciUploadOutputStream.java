@@ -26,6 +26,7 @@ import com.oracle.bmc.objectstorage.ObjectStorageClient;
 import com.oracle.bmc.objectstorage.model.CommitMultipartUploadDetails;
 import com.oracle.bmc.objectstorage.model.CommitMultipartUploadPartDetails;
 import com.oracle.bmc.objectstorage.model.CreateMultipartUploadDetails;
+import com.oracle.bmc.objectstorage.model.StorageTier;
 import com.oracle.bmc.objectstorage.requests.AbortMultipartUploadRequest;
 import com.oracle.bmc.objectstorage.requests.CommitMultipartUploadRequest;
 import com.oracle.bmc.objectstorage.requests.CreateMultipartUploadRequest;
@@ -42,20 +43,27 @@ public class OciUploadOutputStream extends AbstractUploadOutputStream<CommitMult
 
     private final ObjectStorageClient client;
     private final String namespaceName;
+    private final StorageTier storageTier;
 
     public OciUploadOutputStream(final String namespaceName,
                                  final String bucketName,
                                  final ObjectKey key,
                                  final int partSize,
+                                 final StorageTier storageTier,
                                  final ObjectStorageClient client) {
         super(bucketName, key.value(), partSize);
         this.namespaceName = namespaceName;
+        this.storageTier = storageTier;
         this.client = client;
     }
 
     @Override
     protected String createMultipartUploadRequest(final String bucketName, final String key) {
-        final CreateMultipartUploadDetails createDetails = CreateMultipartUploadDetails.builder()
+        final CreateMultipartUploadDetails.Builder builder = CreateMultipartUploadDetails.builder();
+        if (storageTierDefined()) {
+            builder.storageTier(storageTier);
+        }
+        final CreateMultipartUploadDetails createDetails = builder
                 .object(key)
                 .contentType("application/octet-stream")
                 .build();
@@ -71,11 +79,19 @@ public class OciUploadOutputStream extends AbstractUploadOutputStream<CommitMult
         return uploadId;
     }
 
+    private boolean storageTierDefined() {
+        return storageTier != null && storageTier != StorageTier.UnknownEnumValue;
+    }
+
     protected void uploadAsSingleFile(final String bucketName,
                                       final String key,
                                       final InputStream inputStream,
                                       final int size) {
-        final PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+        final PutObjectRequest.Builder builder = PutObjectRequest.builder();
+        if (storageTierDefined()) {
+            builder.storageTier(storageTier);
+        }
+        final PutObjectRequest putObjectRequest = builder
                 .namespaceName(namespaceName)
                 .bucketName(bucketName)
                 .objectName(key)

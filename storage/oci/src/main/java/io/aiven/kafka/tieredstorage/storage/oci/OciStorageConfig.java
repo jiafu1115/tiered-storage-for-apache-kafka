@@ -16,6 +16,7 @@
 
 package io.aiven.kafka.tieredstorage.storage.oci;
 
+import java.util.Arrays;
 import java.util.Map;
 
 import org.apache.kafka.common.config.AbstractConfig;
@@ -24,15 +25,16 @@ import org.apache.kafka.common.config.ConfigDef;
 import com.oracle.bmc.Region;
 import com.oracle.bmc.auth.AbstractAuthenticationDetailsProvider;
 import com.oracle.bmc.auth.InstancePrincipalsAuthenticationDetailsProvider;
+import com.oracle.bmc.objectstorage.model.StorageTier;
 
 public class OciStorageConfig extends AbstractConfig {
 
     public static final String OCI_NAMESPACE_NAME_CONFIG = "oci.namespace.name";
-    private static final String OCI_NAMESPACE_NAME_DOC = "oci namespace to store log segments";
+    private static final String OCI_NAMESPACE_NAME_DOC = "oci namespace which the bucket belongs to";
     public static final String OCI_BUCKET_NAME_CONFIG = "oci.bucket.name";
     private static final String OCI_BUCKET_NAME_DOC = "oci bucket to store log segments";
     public static final String OCI_REGION_CONFIG = "oci.region";
-    private static final String OCI_REGION_DOC = "OCI region where object storage bucket is placed";
+    private static final String OCI_REGION_DOC = "OCI region where the bucket is placed";
 
     private static final String OCI_MULTIPART_UPLOAD_PART_SIZE_CONFIG = "oci.multipart.upload.part.size";
     private static final String OCI_MULTIPART_UPLOAD_PART_SIZE_DOC = "Size of parts in bytes to use when uploading. "
@@ -44,35 +46,47 @@ public class OciStorageConfig extends AbstractConfig {
     static final int OCI_MULTIPART_UPLOAD_PART_SIZE_MAX = Integer.MAX_VALUE;
     static final int OCI_MULTIPART_UPLOAD_PART_SIZE_DEFAULT = 25 * 1024 * 1024; // 25MiB
 
+    public static final String OCI_STORAGE_TIER_CONFIG = "oci.storage.tier";
+    private static final String OCI_STORAGE_TIER_DOC = "Defines which storage tier to use when uploading objects";
+    static final String OCI_STORAGE_TIER_CONFIG_DEFAULT = StorageTier.UnknownEnumValue.toString();
+
     public static ConfigDef configDef() {
         return new ConfigDef()
             .define(
-                    OCI_BUCKET_NAME_CONFIG,
+                OCI_NAMESPACE_NAME_CONFIG,
                 ConfigDef.Type.STRING,
                 ConfigDef.NO_DEFAULT_VALUE,
                 new ConfigDef.NonEmptyString(),
                 ConfigDef.Importance.HIGH,
-                    OCI_BUCKET_NAME_DOC)
+                OCI_NAMESPACE_NAME_DOC)
             .define(
-                    OCI_NAMESPACE_NAME_CONFIG,
-                    ConfigDef.Type.STRING,
-                    ConfigDef.NO_DEFAULT_VALUE,
-                    new ConfigDef.NonEmptyString(),
-                    ConfigDef.Importance.HIGH,
-                    OCI_NAMESPACE_NAME_DOC)
-            .define(
-                    OCI_REGION_CONFIG,
+                OCI_BUCKET_NAME_CONFIG,
                 ConfigDef.Type.STRING,
                 ConfigDef.NO_DEFAULT_VALUE,
-                ConfigDef.Importance.MEDIUM,
-                    OCI_REGION_DOC)
+                new ConfigDef.NonEmptyString(),
+                ConfigDef.Importance.HIGH,
+                OCI_BUCKET_NAME_DOC)
             .define(
-                    OCI_MULTIPART_UPLOAD_PART_SIZE_CONFIG,
+                OCI_REGION_CONFIG,
+                ConfigDef.Type.STRING,
+                ConfigDef.NO_DEFAULT_VALUE,
+                ConfigDef.Importance.HIGH,
+                OCI_REGION_DOC)
+            .define(
+                OCI_MULTIPART_UPLOAD_PART_SIZE_CONFIG,
                 ConfigDef.Type.INT,
-                    OCI_MULTIPART_UPLOAD_PART_SIZE_DEFAULT,
+                OCI_MULTIPART_UPLOAD_PART_SIZE_DEFAULT,
                 ConfigDef.Range.between(OCI_MULTIPART_UPLOAD_PART_SIZE_MIN, OCI_MULTIPART_UPLOAD_PART_SIZE_MAX),
                 ConfigDef.Importance.MEDIUM,
-                    OCI_MULTIPART_UPLOAD_PART_SIZE_DOC);
+                OCI_MULTIPART_UPLOAD_PART_SIZE_DOC)
+            .define(
+                OCI_STORAGE_TIER_CONFIG,
+                ConfigDef.Type.STRING,
+                OCI_STORAGE_TIER_CONFIG_DEFAULT,
+                ConfigDef.ValidString.in(
+                        Arrays.stream(StorageTier.values()).map(Object::toString).toArray(String[]::new)),
+                ConfigDef.Importance.MEDIUM,
+                OCI_STORAGE_TIER_DOC);
     }
 
     public OciStorageConfig(final Map<String, ?> props) {
@@ -93,6 +107,10 @@ public class OciStorageConfig extends AbstractConfig {
 
     public String bucketName() {
         return getString(OCI_BUCKET_NAME_CONFIG);
+    }
+
+    public StorageTier storageTier(){
+        return StorageTier.valueOf(getString(OCI_STORAGE_TIER_CONFIG));
     }
 
     public int uploadPartSize() {
