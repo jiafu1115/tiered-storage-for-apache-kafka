@@ -95,12 +95,12 @@ public class OciStorage implements StorageBackend {
 
     @Override
     public InputStream fetch(final ObjectKey key) throws StorageBackendException {
-        final GetObjectRequest getRequest = GetObjectRequest.builder()
+        final GetObjectRequest getObjectRequest = GetObjectRequest.builder()
             .namespaceName(namespaceName)
             .bucketName(bucketName)
             .objectName(key.value()).build();
         try {
-            return objectStorageClient.getObject(getRequest).getInputStream();
+            return objectStorageClient.getObject(getObjectRequest).getInputStream();
         } catch (final BmcException e) {
             if (e.getStatusCode() == 404) {
                 throw new KeyNotFoundException(this, key, e);
