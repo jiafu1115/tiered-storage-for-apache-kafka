@@ -26,6 +26,8 @@ import java.util.Map;
 
 public class OciStorageConfig extends AbstractConfig {
 
+    public static final String OCI_NAMESPACE_NAME_CONFIG = "oci.namespace.name";
+    private static final String OCI_NAMESPACE_NAME_DOC = "oci namespace to store log segments";
     public static final String OCI_BUCKET_NAME_CONFIG = "oci.bucket.name";
     private static final String OCI_BUCKET_NAME_DOC = "oci bucket to store log segments";
     public static final String OCI_REGION_CONFIG = "oci.region";
@@ -51,6 +53,13 @@ public class OciStorageConfig extends AbstractConfig {
                 ConfigDef.Importance.HIGH,
                     OCI_BUCKET_NAME_DOC)
             .define(
+                    OCI_NAMESPACE_NAME_CONFIG,
+                    ConfigDef.Type.STRING,
+                    ConfigDef.NO_DEFAULT_VALUE,
+                    new ConfigDef.NonEmptyString(),
+                    ConfigDef.Importance.HIGH,
+                    OCI_NAMESPACE_NAME_DOC)
+            .define(
                     OCI_REGION_CONFIG,
                 ConfigDef.Type.STRING,
                 ConfigDef.NO_DEFAULT_VALUE,
@@ -75,6 +84,10 @@ public class OciStorageConfig extends AbstractConfig {
 
     AbstractAuthenticationDetailsProvider credentialsProvider() {
         return InstancePrincipalsAuthenticationDetailsProvider.builder().build();
+    }
+
+    public String namespaceName() {
+        return getString(OCI_NAMESPACE_NAME_CONFIG);
     }
 
     public String bucketName() {

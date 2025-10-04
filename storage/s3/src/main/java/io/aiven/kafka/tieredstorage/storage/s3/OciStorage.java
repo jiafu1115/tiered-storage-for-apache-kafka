@@ -38,6 +38,7 @@ public class OciStorage implements StorageBackend {
 
     ObjectStorageClient objectStorageClient;
 
+    private String namespaceName;
     private String bucketName;
     private int partSize;
 
@@ -45,6 +46,7 @@ public class OciStorage implements StorageBackend {
     public void configure(final Map<String, ?> configs) {
         final OciStorageConfig config = new OciStorageConfig(configs);
         this.objectStorageClient = OciClientBuilder.build(config);
+        this.namespaceName = config.namespaceName();
         this.bucketName = config.bucketName();
         this.partSize = config.uploadPartSize();
     }
@@ -62,13 +64,14 @@ public class OciStorage implements StorageBackend {
     }
 
     OciUploadOutputStream ociOutputStream(final ObjectKey key) {
-        return new OciUploadOutputStream(bucketName, key, partSize, objectStorageClient);
+        return new OciUploadOutputStream(namespaceName, bucketName, key, partSize, objectStorageClient);
     }
 
     @Override
     public void delete(final ObjectKey key) throws StorageBackendException {
         try {
             final DeleteObjectRequest deleteRequest = DeleteObjectRequest.builder()
+                    .namespaceName(namespaceName)
                     .bucketName(bucketName)
                     .objectName(key.value())
                     .build();
@@ -89,7 +92,10 @@ public class OciStorage implements StorageBackend {
 
     @Override
     public InputStream fetch(final ObjectKey key) throws StorageBackendException {
-        final GetObjectRequest getRequest = GetObjectRequest.builder().bucketName(bucketName).objectName(key.value()).build();
+        final GetObjectRequest getRequest = GetObjectRequest.builder()
+            .namespaceName(namespaceName)
+            .bucketName(bucketName)
+            .objectName(key.value()).build();
         try {
             return objectStorageClient.getObject(getRequest).getInputStream();
         } catch (final BmcException e) {
@@ -109,6 +115,7 @@ public class OciStorage implements StorageBackend {
             }
             
             final GetObjectRequest getRequest = GetObjectRequest.builder()
+                 .namespaceName(namespaceName)
                 .bucketName(bucketName)
                 .objectName(key.value())
                 .range(formatRange(range))
@@ -133,6 +140,7 @@ public class OciStorage implements StorageBackend {
     @Override
     public String toString() {
         return "OciStorage{"
+            + "namespaceName='" + namespaceName + '\''
             + "bucketName='" + bucketName + '\''
             + ", partSize=" + partSize
             + '}';

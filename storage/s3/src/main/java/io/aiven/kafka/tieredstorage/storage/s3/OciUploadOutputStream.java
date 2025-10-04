@@ -40,12 +40,15 @@ public class OciUploadOutputStream extends AbstractUploadOutputStream<CommitMult
     private static final Logger log = LoggerFactory.getLogger(OciUploadOutputStream.class);
 
     private final ObjectStorageClient client;
+    private final String namespaceName;
 
-    public OciUploadOutputStream(final String bucketName,
+    public OciUploadOutputStream(final String namespaceName,
+                                 final String bucketName,
                                  final ObjectKey key,
                                  final int partSize,
                                  final ObjectStorageClient client) {
         super(bucketName, key.value(), partSize);
+        this.namespaceName = namespaceName;
         this.client = client;
     }
 
@@ -57,6 +60,7 @@ public class OciUploadOutputStream extends AbstractUploadOutputStream<CommitMult
                 .build();
 
         CreateMultipartUploadRequest initialRequest = CreateMultipartUploadRequest.builder()
+                .namespaceName(namespaceName)
                 .bucketName(bucketName)
                 .createMultipartUploadDetails(createDetails)
                 .build();
@@ -68,6 +72,7 @@ public class OciUploadOutputStream extends AbstractUploadOutputStream<CommitMult
 
     protected void uploadAsSingleFile(final String bucketName, final String key, final InputStream inputStream, final int size) {
         PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+                .namespaceName(namespaceName)
                 .bucketName(bucketName)
                 .objectName(key)
                 .putObjectBody(inputStream)
@@ -79,6 +84,7 @@ public class OciUploadOutputStream extends AbstractUploadOutputStream<CommitMult
     @Override
     protected CommitMultipartUploadPartDetails _uploadPart(String bucketName, String key, String uploadId, int partNumber, final InputStream in, final int actualPartSize) {
         UploadPartRequest uploadPartRequest = UploadPartRequest.builder()
+                .namespaceName(namespaceName)
                 .bucketName(bucketName)
                 .objectName(key)
                 .uploadId(uploadId)
@@ -97,6 +103,7 @@ public class OciUploadOutputStream extends AbstractUploadOutputStream<CommitMult
     @Override
     protected void abortUpload(String bucketName, String key, String uploadId) {
         final var request = AbortMultipartUploadRequest.builder()
+                .namespaceName(namespaceName)
                 .bucketName(bucketName)
                 .objectName(key)
                 .uploadId(uploadId)
@@ -111,6 +118,7 @@ public class OciUploadOutputStream extends AbstractUploadOutputStream<CommitMult
                 .build();
 
         CommitMultipartUploadRequest commitReq = CommitMultipartUploadRequest.builder()
+                .namespaceName(namespaceName)
                 .bucketName(bucketName)
                 .objectName(key)
                 .uploadId(uploadId)
