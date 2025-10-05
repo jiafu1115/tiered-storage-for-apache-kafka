@@ -33,7 +33,7 @@ dependencies {
     }
     implementation ("com.oracle.oci.sdk:oci-java-sdk-objectstorage:$oracleSdkVersion") {excludeFromOracleDeps(it)}
     implementation ("com.oracle.oci.sdk:oci-java-sdk-common-httpclient-jersey:$oracleSdkVersion") {excludeFromOracleDeps(it)}
-    implementation "org.glassfish.jersey.media:jersey-media-json-jackson:2.39.1"
+    implementation ("org.glassfish.jersey.media:jersey-media-json-jackson:2.39.1") {excludeFromOracleDeps(it)}
 
     implementation project(':commons')
 

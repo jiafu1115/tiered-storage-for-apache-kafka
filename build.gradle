@@ -129,7 +129,7 @@ subprojects {
 
         awsSdkVersion = "2.34.7"
 
-        oracleSdkVersion = "3.73.1"
+        oracleSdkVersion = "3.74.1"
 
         gcpSdkVersion = "2.58.0"
 
