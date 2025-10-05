@@ -33,6 +33,7 @@ import io.aiven.kafka.tieredstorage.storage.StorageBackendException;
 import com.oracle.bmc.model.BmcException;
 import com.oracle.bmc.model.Range;
 import com.oracle.bmc.objectstorage.ObjectStorageClient;
+import com.oracle.bmc.objectstorage.model.StorageTier;
 import com.oracle.bmc.objectstorage.requests.DeleteObjectRequest;
 import com.oracle.bmc.objectstorage.requests.GetObjectRequest;
 
@@ -43,6 +44,7 @@ public class OciStorage implements StorageBackend {
     private String namespaceName;
     private String bucketName;
     private int partSize;
+    private StorageTier storageTier;
 
     @Override
     public void configure(final Map<String, ?> configs) {
@@ -51,6 +53,7 @@ public class OciStorage implements StorageBackend {
         this.namespaceName = config.namespaceName();
         this.bucketName = config.bucketName();
         this.partSize = config.uploadPartSize();
+        this.storageTier = config.storageTier();
     }
 
     @Override
@@ -66,7 +69,7 @@ public class OciStorage implements StorageBackend {
     }
 
     OciUploadOutputStream ociOutputStream(final ObjectKey key) {
-        return new OciUploadOutputStream(namespaceName, bucketName, key, partSize, objectStorageClient);
+        return new OciUploadOutputStream(namespaceName, bucketName, key, partSize, storageTier, objectStorageClient);
     }
 
     @Override

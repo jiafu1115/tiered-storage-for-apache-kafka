@@ -572,6 +572,14 @@ OciStorageConfig
   * Valid Values: [5242880,...,2147483647]
   * Importance: medium
 
+``oci.storage.tier``
+  Defines which storage tier to use when uploading objects
+
+  * Type: string
+  * Default: UnknownEnumValue
+  * Valid Values: [Standard, InfrequentAccess, Archive, UnknownEnumValue]
+  * Importance: medium
+
 
 
 -----------------

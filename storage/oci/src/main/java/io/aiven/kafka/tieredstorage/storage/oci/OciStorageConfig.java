@@ -16,6 +16,7 @@
 
 package io.aiven.kafka.tieredstorage.storage.oci;
 
+import java.util.Arrays;
 import java.util.Map;
 
 import org.apache.kafka.common.config.AbstractConfig;
@@ -24,6 +25,7 @@ import org.apache.kafka.common.config.ConfigDef;
 import com.oracle.bmc.Region;
 import com.oracle.bmc.auth.AbstractAuthenticationDetailsProvider;
 import com.oracle.bmc.auth.InstancePrincipalsAuthenticationDetailsProvider;
+import com.oracle.bmc.objectstorage.model.StorageTier;
 
 public class OciStorageConfig extends AbstractConfig {
 
@@ -43,6 +45,10 @@ public class OciStorageConfig extends AbstractConfig {
     static final int OCI_MULTIPART_UPLOAD_PART_SIZE_MIN = 5 * 1024 * 1024; // 5MiB
     static final int OCI_MULTIPART_UPLOAD_PART_SIZE_MAX = Integer.MAX_VALUE;
     static final int OCI_MULTIPART_UPLOAD_PART_SIZE_DEFAULT = 25 * 1024 * 1024; // 25MiB
+
+    public static final String OCI_STORAGE_TIER_CONFIG = "oci.storage.tier";
+    private static final String OCI_STORAGE_TIER_DOC = "Defines which storage tier to use when uploading objects";
+    static final String OCI_STORAGE_TIER_CONFIG_DEFAULT = StorageTier.UnknownEnumValue.toString();
 
     public static ConfigDef configDef() {
         return new ConfigDef()
@@ -72,7 +78,15 @@ public class OciStorageConfig extends AbstractConfig {
                 OCI_MULTIPART_UPLOAD_PART_SIZE_DEFAULT,
                 ConfigDef.Range.between(OCI_MULTIPART_UPLOAD_PART_SIZE_MIN, OCI_MULTIPART_UPLOAD_PART_SIZE_MAX),
                 ConfigDef.Importance.MEDIUM,
-                OCI_MULTIPART_UPLOAD_PART_SIZE_DOC);
+                OCI_MULTIPART_UPLOAD_PART_SIZE_DOC)
+            .define(
+                OCI_STORAGE_TIER_CONFIG,
+                ConfigDef.Type.STRING,
+                OCI_STORAGE_TIER_CONFIG_DEFAULT,
+                ConfigDef.ValidString.in(
+                        Arrays.stream(StorageTier.values()).map(Object::toString).toArray(String[]::new)),
+                ConfigDef.Importance.MEDIUM,
+                OCI_STORAGE_TIER_DOC);
     }
 
     public OciStorageConfig(final Map<String, ?> props) {
@@ -93,6 +107,10 @@ public class OciStorageConfig extends AbstractConfig {
 
     public String bucketName() {
         return getString(OCI_BUCKET_NAME_CONFIG);
+    }
+
+    public StorageTier storageTier(){
+        return StorageTier.valueOf(getString(OCI_STORAGE_TIER_CONFIG));
     }
 
     public int uploadPartSize() {
